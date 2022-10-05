@@ -5,8 +5,8 @@ import "gorm.io/gorm"
 // User struct
 type User struct {
 	gorm.Model
-	Username string `gorm:"unique_index;not null" json:"username"`
-	Email    string `gorm:"unique_index;not null" json:"email"`
-	Password string `gorm:"not null" json:"password"`
+	Username string `gorm:"unique_index;not null;unique" json:"username" validate:"required,lte=50,gte=5"`
+	Email    string `gorm:"unique_index;not null;unique" json:"email" validate:"required,email,lte=150"`
+	Password string `gorm:"not null" json:"password" validate:"required,gte=8"`
 	Names    string `json:"names"`
 }

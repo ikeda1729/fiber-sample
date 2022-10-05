@@ -3,6 +3,7 @@ package handler
 import (
 	"api-fiber-gorm/database"
 	"api-fiber-gorm/model"
+	"api-fiber-gorm/utils"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -58,27 +59,31 @@ func GetUser(c *fiber.Ctx) error {
 
 // CreateUser new user
 func CreateUser(c *fiber.Ctx) error {
-	type NewUser struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-	}
-
 	db := database.DB
 	user := new(model.User)
 	if err := c.BodyParser(user); err != nil {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Review your input", "data": err})
+	}
 
+	// validation
+	if err := utils.ValidateStruct(*user); err != nil {
+		return c.Status(500).JSON(fiber.Map{"status": "validation error", "message": "Review your input", "data": err})
 	}
 
 	hash, err := hashPassword(user.Password)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't hash password", "data": err})
-
 	}
 
 	user.Password = hash
 	if err := db.Create(&user).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't create user", "data": err})
+	}
+
+	// for response
+	type NewUser struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
 	}
 
 	newUser := NewUser{
