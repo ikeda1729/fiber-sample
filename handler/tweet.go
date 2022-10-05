@@ -21,7 +21,7 @@ func GetTweet(c *fiber.Ctx) error {
 	db := database.DB
 	var tweet model.Tweet
 	db.Find(&tweet, id)
-	if tweet.Title == "" {
+	if tweet.Content == "" {
 		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "No tweet found with ID", "data": nil})
 
 	}
@@ -46,7 +46,7 @@ func DeleteTweet(c *fiber.Ctx) error {
 
 	var tweet model.Tweet
 	db.First(&tweet, id)
-	if tweet.Title == "" {
+	if tweet.Content == "" {
 		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "No tweet found with ID", "data": nil})
 
 	}
