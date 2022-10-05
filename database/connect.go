@@ -4,9 +4,10 @@ import (
 	"api-fiber-gorm/config"
 	"api-fiber-gorm/model"
 	"fmt"
+	"strconv"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"strconv"
 )
 
 // ConnectDB connect to db
@@ -22,6 +23,7 @@ func ConnectDB() {
 	}
 
 	fmt.Println("Connection Opened to Database")
+	// DB.Migrator().DropTable(&model.Product{}, &model.User{})
 	DB.AutoMigrate(&model.Product{}, &model.User{})
 	fmt.Println("Database Migrated")
 }
