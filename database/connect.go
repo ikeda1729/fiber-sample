@@ -23,7 +23,7 @@ func ConnectDB() {
 	}
 
 	fmt.Println("Connection Opened to Database")
-	// DB.Migrator().DropTable(&model.Product{}, &model.User{})
-	DB.AutoMigrate(&model.Product{}, &model.User{})
+	// DB.Migrator().DropTable(&model.Tweet{}, &model.User{})
+	DB.AutoMigrate(&model.Tweet{}, &model.User{})
 	fmt.Println("Database Migrated")
 }
