@@ -116,7 +116,8 @@ func Login(c *fiber.Ctx) error {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = ud.Username
 	claims["user_id"] = ud.ID
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	exp := time.Now().Add(time.Hour * 72)
+	claims["exp"] = exp.Unix()
 
 	t, err := token.SignedString([]byte(config.Config("SECRET")))
 	if err != nil {
@@ -127,10 +128,26 @@ func Login(c *fiber.Ctx) error {
 	cookie := fiber.Cookie{
 		Name:     "jwt",
 		Value:    t,
-		Expires:  time.Now().Add(time.Hour * 24),
+		Expires:  exp,
 		HTTPOnly: true,
 	}
 	c.Cookie(&cookie)
 
 	return c.JSON(fiber.Map{"status": "success", "message": "Success login", "data": t})
+}
+
+func Logout(ctx *fiber.Ctx) error {
+	// cookieをクリアする
+	cookie := fiber.Cookie{
+		Name:     "jwt",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour * 24), // -を指定
+		HTTPOnly: true,
+	}
+
+	ctx.Cookie(&cookie)
+	return ctx.JSON(fiber.Map{
+		"status":  "success",
+		"message": "Success logout",
+	})
 }
