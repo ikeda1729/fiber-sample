@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
+	"gorm.io/gorm"
 )
 
 // GetAllTweets query all tweets
@@ -30,10 +31,22 @@ func GetTweet(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "data": tweet})
 }
 
+// GetTweet query tweet
+func GetUserTweet(c *fiber.Ctx) error {
+	userId := c.Params("userId")
+	db := database.DB
+	var user model.User
+	db.Preload("Tweets", func(db *gorm.DB) *gorm.DB {
+		return db.Order("created_at DESC")
+	}).Find(&user, userId)
+
+	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "data": user})
+}
+
 // CreateTweet new tweet
 func CreateTweet(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
-	username := claims["username"].(string)
+	userId := int(claims["user_id"].(float64))
 	db := database.DB
 
 	type NewTweet struct {
@@ -48,10 +61,7 @@ func CreateTweet(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"status": "validation error", "message": "Review your input", "data": err})
 	}
 
-	var user model.User
-	db.Where("username = ?", username).First(&user)
-
-	tweet := model.Tweet{Content: "test", UserID: username, User: user}
+	tweet := model.Tweet{Content: "test", UserID: userId}
 	db.Create(&tweet)
 	return c.JSON(fiber.Map{"status": "success", "message": "Created tweet", "data": tweet})
 }
