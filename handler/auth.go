@@ -4,6 +4,7 @@ import (
 	"api-fiber-gorm/config"
 	"api-fiber-gorm/database"
 	"api-fiber-gorm/model"
+	"api-fiber-gorm/utils"
 	"errors"
 	"net/mail"
 	"time"
@@ -24,7 +25,7 @@ func CheckPasswordHash(password, hash string) bool {
 func getUserByEmail(e string) (*model.User, error) {
 	db := database.DB
 	var user model.User
-	if err := db.Where(&model.User{Email: e}).Find(&user).Error; err != nil {
+	if err := db.Where("email = ?", e).Find(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -36,7 +37,7 @@ func getUserByEmail(e string) (*model.User, error) {
 func getUserByUsername(u string) (*model.User, error) {
 	db := database.DB
 	var user model.User
-	if err := db.Where(&model.User{Username: u}).Find(&user).Error; err != nil {
+	if err := db.Where("username = ?", u).Find(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -53,8 +54,8 @@ func valid(email string) bool {
 // Login get user and password
 func Login(c *fiber.Ctx) error {
 	type LoginInput struct {
-		Identity string `json:"identity"`
-		Password string `json:"password"`
+		Email    string `json:"email" validate:"required"`
+		Password string `json:"password" validate:"required"`
 	}
 	type UserData struct {
 		ID       uint   `json:"id"`
@@ -63,41 +64,24 @@ func Login(c *fiber.Ctx) error {
 		Password string `json:"password"`
 	}
 	input := new(LoginInput)
-	var ud UserData
 
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on login request", "data": err})
 	}
 
-	identity := input.Identity
+	// validation
+	if err := utils.ValidateStruct(*input); err != nil {
+		return c.Status(500).JSON(fiber.Map{"status": "validation error", "message": "Review your input", "data": err})
+	}
+
+	email := input.Email
 	pass := input.Password
-	user, email, err := new(model.User), new(model.User), *new(error)
-
-	if valid(identity) == true {
-		email, err = getUserByEmail(identity)
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Error on email", "data": err})
-		}
-	} else {
-		user, err = getUserByUsername(identity)
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Error on username", "data": err})
-		}
+	user, err := getUserByEmail(email)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Error on email", "data": err})
 	}
 
-	if email == nil && user == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "User not found", "data": err})
-	}
-
-	if email != nil {
-		ud = UserData{
-			ID:       email.ID,
-			Username: email.Username,
-			Email:    email.Email,
-			Password: email.Password,
-		}
-
-	}
+	var ud UserData
 	if user != nil {
 		ud = UserData{
 			ID:       user.ID,
@@ -116,6 +100,7 @@ func Login(c *fiber.Ctx) error {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = ud.Username
 	claims["user_id"] = ud.ID
+	exp := time.Now().Add(time.Hour * 72)
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 	t, err := token.SignedString([]byte(config.Config("SECRET")))
@@ -123,5 +108,35 @@ func Login(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	return c.JSON(fiber.Map{"status": "success", "message": "Success login", "data": t})
+	// Cookieに保存
+	cookie := fiber.Cookie{
+		Name:    "jwt",
+		Value:   t,
+		Expires: exp,
+	}
+	c.Cookie(&cookie)
+
+	type LoginResponse struct {
+		Token    string `json:"token"`
+		Username string `json:"username"`
+	}
+
+	data := LoginResponse{Token: t, Username: ud.Username}
+
+	return c.JSON(fiber.Map{"status": "success", "message": "Success login", "data": data})
+}
+
+func Logout(ctx *fiber.Ctx) error {
+	// cookieをクリアする
+	cookie := fiber.Cookie{
+		Name:    "jwt",
+		Value:   "",
+		Expires: time.Now().Add(-time.Hour * 24), // -を指定
+	}
+
+	ctx.Cookie(&cookie)
+	return ctx.JSON(fiber.Map{
+		"status":  "success",
+		"message": "Success logout",
+	})
 }
