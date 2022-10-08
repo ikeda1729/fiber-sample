@@ -49,12 +49,19 @@ func validUser(id string, p string) bool {
 func GetUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	db := database.DB
-	var user model.User
+	var user model.UserResponse
 	db.Find(&user, id)
 	if user.Username == "" {
 		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "No user found with ID", "data": nil})
 	}
-	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "data": user})
+	return c.JSON(fiber.Map{"status": "success", "message": "User found", "data": user})
+}
+
+func GetUsers(c *fiber.Ctx) error {
+	db := database.DB
+	var users []model.UserResponse
+	db.Model(&model.User{}).Find(&users)
+	return c.JSON(fiber.Map{"status": "success", "message": "User found", "data": users})
 }
 
 // CreateUser new user
