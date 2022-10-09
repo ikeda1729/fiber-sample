@@ -22,7 +22,11 @@ func SetupRoutes(app *fiber.App) {
 	// User
 	user := api.Group("/user")
 	user.Get("/:id", handler.GetUser)
+	user.Get("/", handler.GetUsers)
 	user.Get("/:userId/tweet", handler.GetUserTweet)
+	user.Get("/:userId/isFollowing", middleware.Protected(), handler.GetIsFollowing)
+	user.Get("/:userId/followings", handler.GetUserFollowing)
+	user.Get("/:userId/followers", handler.GetUserFollowers)
 	user.Post("/", handler.CreateUser)
 	user.Patch("/:id", middleware.Protected(), handler.UpdateUser)
 	user.Delete("/:id", middleware.Protected(), handler.DeleteUser)
@@ -33,4 +37,9 @@ func SetupRoutes(app *fiber.App) {
 	tweet.Get("/:id", handler.GetTweet)
 	tweet.Post("/", middleware.Protected(), handler.CreateTweet)
 	tweet.Delete("/:id", middleware.Protected(), handler.DeleteTweet)
+
+	// Relation
+	relation := api.Group("/relation")
+	relation.Post("/:followeeId", middleware.Protected(), handler.CreateRelation)
+	relation.Delete("/:followeeId", middleware.Protected(), handler.DeleteRelation)
 }
