@@ -13,6 +13,21 @@ type RelationResponse struct {
 	FolloweeID uint
 }
 
+// Check currentUser is following userId or not
+func GetIsFollowing(c *fiber.Ctx) error {
+	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
+	currentUserId := int(claims["user_id"].(float64))
+	userId := c.Params("userId")
+	db := database.DB
+	var users []model.UserResponse
+	db.Model(&model.User{}).Joins("inner join user_followees on user_followees.user_id = users.id").
+		Where("user_followees.user_id = ?", currentUserId).
+		Where("user_followees.followee_id = ?", userId).Find(&users)
+	response := model.IsFollowingResponse{UserID: currentUserId, FolloweeID: userId, IsFollowing: len(users) != 0}
+
+	return c.JSON(fiber.Map{"status": "success", "message": "Get Isfollowing", "data": response})
+}
+
 func GetUserFollowing(c *fiber.Ctx) error {
 	userId := c.Params("userId")
 	db := database.DB
@@ -21,7 +36,7 @@ func GetUserFollowing(c *fiber.Ctx) error {
 	var users []model.UserResponse
 	db.Model(&user).Association("Followees").Find(&users)
 
-	return c.JSON(fiber.Map{"status": "success", "message": "Following", "data": users})
+	return c.JSON(fiber.Map{"status": "success", "message": "Get followings", "data": users})
 }
 
 func GetUserFollowers(c *fiber.Ctx) error {
@@ -31,7 +46,7 @@ func GetUserFollowers(c *fiber.Ctx) error {
 	db.Model(&model.User{}).Joins("inner join user_followees on user_followees.user_id = users.id").
 		Where("user_followees.followee_id = ?", userId).Find(&users)
 
-	return c.JSON(fiber.Map{"status": "success", "message": "Following", "data": users})
+	return c.JSON(fiber.Map{"status": "success", "message": "Get followers", "data": users})
 }
 
 func CreateRelation(c *fiber.Ctx) error {

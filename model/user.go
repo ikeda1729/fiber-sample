@@ -15,5 +15,11 @@ type User struct {
 
 type UserResponse struct {
 	gorm.Model
-	Username string `json: username`
+	Username string
+}
+
+type IsFollowingResponse struct {
+	UserID      int
+	FolloweeID  string
+	IsFollowing bool
 }

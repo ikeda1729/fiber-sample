@@ -117,11 +117,12 @@ func Login(c *fiber.Ctx) error {
 	c.Cookie(&cookie)
 
 	type LoginResponse struct {
-		Token    string `json:"token"`
-		Username string `json:"username"`
+		UserID   uint
+		Username string
+		Token    string
 	}
 
-	data := LoginResponse{Token: t, Username: ud.Username}
+	data := LoginResponse{UserID: ud.ID, Username: ud.Username, Token: t}
 
 	return c.JSON(fiber.Map{"status": "success", "message": "Success login", "data": data})
 }
