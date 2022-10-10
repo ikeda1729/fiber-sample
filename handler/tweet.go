@@ -4,6 +4,7 @@ import (
 	"api-fiber-gorm/database"
 	"api-fiber-gorm/model"
 	"api-fiber-gorm/utils"
+	"sort"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
@@ -43,6 +44,43 @@ func GetUserTweet(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "data": user})
 }
 
+// GetTweet query tweet
+func GetTimeline(c *fiber.Ctx) error {
+	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
+	var user model.User
+	userId := int(claims["user_id"].(float64))
+	db := database.DB
+	db.Preload("Tweets").Preload("Followees.Tweets").Find(&user, userId)
+
+	type Timeline struct {
+		Tweet    model.Tweet
+		Username string
+	}
+
+	var tl Timeline
+	var result []Timeline
+	// 自分のtweetとusernameを取り出す
+	for _, tweet := range user.Tweets {
+		tl.Tweet = tweet
+		tl.Username = user.Username
+		result = append(result, tl)
+	}
+	// followeesのtweetとusernameを取り出す
+	for _, followee := range user.Followees {
+		for _, tweet := range followee.Tweets {
+			tl.Tweet = tweet
+			tl.Username = followee.Username
+			result = append(result, tl)
+		}
+	}
+	// timeline全体をsort
+	sort.Slice(result[:], func(i, j int) bool {
+		return result[i].Tweet.CreatedAt.After(result[j].Tweet.CreatedAt)
+	})
+
+	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "data": result})
+}
+
 // CreateTweet new tweet
 func CreateTweet(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
@@ -61,7 +99,7 @@ func CreateTweet(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"status": "validation error", "message": "Review your input", "data": err})
 	}
 
-	tweet := model.Tweet{Content: "test", UserID: userId}
+	tweet := model.Tweet{Content: newTweet.Content, UserID: userId}
 	db.Create(&tweet)
 	return c.JSON(fiber.Map{"status": "success", "message": "Created tweet", "data": tweet})
 }
@@ -71,11 +109,16 @@ func DeleteTweet(c *fiber.Ctx) error {
 	id := c.Params("id")
 	db := database.DB
 
+	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
+	userId := int(claims["user_id"].(float64))
+
 	var tweet model.Tweet
 	db.First(&tweet, id)
 	if tweet.Content == "" {
 		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "No tweet found with ID", "data": nil})
-
+	}
+	if tweet.UserID != userId {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "Unauthorized", "data": nil})
 	}
 	db.Delete(&tweet)
 	return c.JSON(fiber.Map{"status": "success", "message": "Tweet successfully deleted", "data": nil})

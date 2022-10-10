@@ -34,6 +34,7 @@ func SetupRoutes(app *fiber.App) {
 	// Tweet
 	tweet := api.Group("/tweet")
 	tweet.Get("/", handler.GetAllTweets)
+	tweet.Get("/timeline", middleware.Protected(), handler.GetTimeline)
 	tweet.Get("/:id", handler.GetTweet)
 	tweet.Post("/", middleware.Protected(), handler.CreateTweet)
 	tweet.Delete("/:id", middleware.Protected(), handler.DeleteTweet)
