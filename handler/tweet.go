@@ -49,8 +49,6 @@ func GetUserTweet(c *fiber.Ctx) error {
 // GetTweet query tweet
 func GetTimeline(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
-	var tweets []model.Tweet
-	_ = tweets
 	userId := int(claims["user_id"].(float64))
 	db := database.DB
 	type Result struct {

@@ -34,9 +34,12 @@ func GetUserFollowing(c *fiber.Ctx) error {
 	var user model.User
 	db.First(&user, userId)
 	var users []model.UserResponse
-	db.Model(&user).Association("Followees").Find(&users)
+	db.Model(&user).Order("users.created_at desc").Scopes(Paginate(c)).
+		Association("Followees").Find(&users)
 
-	return c.JSON(fiber.Map{"status": "success", "message": "Get followings", "data": users})
+	count := db.Model(&user).Association("Followees").Count()
+
+	return c.JSON(fiber.Map{"status": "success", "message": "Get followings", "totalCount": count, "data": users})
 }
 
 func GetUserFollowers(c *fiber.Ctx) error {
@@ -44,9 +47,14 @@ func GetUserFollowers(c *fiber.Ctx) error {
 	db := database.DB
 	var users []model.UserResponse
 	db.Model(&model.User{}).Joins("inner join user_followees on user_followees.user_id = users.id").
-		Where("user_followees.followee_id = ?", userId).Find(&users)
+		Where("user_followees.followee_id = ?", userId).
+		Order("users.created_at desc").Scopes(Paginate(c)).Find(&users)
 
-	return c.JSON(fiber.Map{"status": "success", "message": "Get followers", "data": users})
+	var count int64
+	db.Model(&model.User{}).Joins("inner join user_followees on user_followees.user_id = users.id").
+		Where("user_followees.followee_id = ?", userId).Count(&count)
+
+	return c.JSON(fiber.Map{"status": "success", "message": "Get followers", "totalCount": count, "data": users})
 }
 
 func CreateRelation(c *fiber.Ctx) error {
