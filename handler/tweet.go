@@ -38,10 +38,13 @@ func GetUserTweet(c *fiber.Ctx) error {
 	db := database.DB
 	var user model.User
 	db.Preload("Tweets", func(db *gorm.DB) *gorm.DB {
-		return db.Order("created_at DESC")
+		return db.Order("created_at DESC").Scopes(Paginate(c))
 	}).Find(&user, userId)
 
-	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "data": user})
+	var count int64
+	db.Model(&model.Tweet{}).Where("user_id = ?", userId).Count(&count)
+
+	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "totalCount": count, "data": user})
 }
 
 // GetTweet query tweet
