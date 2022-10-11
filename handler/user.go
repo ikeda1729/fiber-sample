@@ -60,8 +60,10 @@ func GetUser(c *fiber.Ctx) error {
 func GetUsers(c *fiber.Ctx) error {
 	db := database.DB
 	var users []model.UserResponse
-	db.Model(&model.User{}).Find(&users)
-	return c.JSON(fiber.Map{"status": "success", "message": "User found", "data": users})
+	db.Model(&model.User{}).Scopes(Paginate(c)).Find(&users)
+	var totalCount int64
+	db.Model(&model.User{}).Count(&totalCount)
+	return c.JSON(fiber.Map{"status": "success", "message": "User found", "totalCount": totalCount, "data": users})
 }
 
 // CreateUser new user
