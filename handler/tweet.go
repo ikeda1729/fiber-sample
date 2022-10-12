@@ -4,7 +4,6 @@ import (
 	"api-fiber-gorm/database"
 	"api-fiber-gorm/model"
 	"api-fiber-gorm/utils"
-	"sort"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
@@ -38,47 +37,38 @@ func GetUserTweet(c *fiber.Ctx) error {
 	db := database.DB
 	var user model.User
 	db.Preload("Tweets", func(db *gorm.DB) *gorm.DB {
-		return db.Order("created_at DESC")
+		return db.Order("created_at DESC").Scopes(Paginate(c))
 	}).Find(&user, userId)
 
-	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "data": user})
+	var count int64
+	db.Model(&model.Tweet{}).Where("user_id = ?", userId).Count(&count)
+
+	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "totalCount": count, "data": user})
 }
 
 // GetTweet query tweet
 func GetTimeline(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
-	var user model.User
 	userId := int(claims["user_id"].(float64))
 	db := database.DB
-	db.Preload("Tweets").Preload("Followees.Tweets").Find(&user, userId)
-
-	type Timeline struct {
-		Tweet    model.Tweet
-		Username string
+	type Result struct {
+		model.Tweet
+		Username string `json:"username"`
 	}
+	var results []Result
+	db.Model(&model.Tweet{}).Distinct("tweets.id").Select("tweets.*, users.username").
+		Joins("left join user_followees on user_followees.followee_id = tweets.user_id").
+		Joins("left join users on users.id = tweets.user_id").
+		Where("user_followees.user_id = ?", userId).
+		Or("tweets.user_id = ?", userId).
+		Order("tweets.created_at desc").Scopes(Paginate(c)).Scan(&results)
 
-	var tl Timeline
-	var result []Timeline
-	// 自分のtweetとusernameを取り出す
-	for _, tweet := range user.Tweets {
-		tl.Tweet = tweet
-		tl.Username = user.Username
-		result = append(result, tl)
-	}
-	// followeesのtweetとusernameを取り出す
-	for _, followee := range user.Followees {
-		for _, tweet := range followee.Tweets {
-			tl.Tweet = tweet
-			tl.Username = followee.Username
-			result = append(result, tl)
-		}
-	}
-	// timeline全体をsort
-	sort.Slice(result[:], func(i, j int) bool {
-		return result[i].Tweet.CreatedAt.After(result[j].Tweet.CreatedAt)
-	})
+	var count int64
+	db.Model(&model.Tweet{}).Distinct("tweets.id").
+		Joins("left join user_followees on user_followees.followee_id = tweets.user_id").
+		Where("user_followees.user_id = ?", userId).Or("tweets.user_id = ?", userId).Count(&count)
 
-	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "data": result})
+	return c.JSON(fiber.Map{"status": "success", "message": "Tweet found", "totalCount": count, "data": results})
 }
 
 // CreateTweet new tweet
