@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -49,12 +49,13 @@ func validUser(id string, p string) bool {
 func GetUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	db := database.DB
-	var user model.UserResponse
-	db.Find(&user, id)
+	var user model.User
+	var result model.UserResponse
+	db.Find(&user, id).Scan(&result)
 	if user.Username == "" {
 		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "No user found with ID", "data": nil})
 	}
-	return c.JSON(fiber.Map{"status": "success", "message": "User found", "data": user})
+	return c.JSON(fiber.Map{"status": "success", "message": "User found", "data": result})
 }
 
 func GetUsers(c *fiber.Ctx) error {
@@ -89,13 +90,7 @@ func CreateUser(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't create user", "data": err})
 	}
 
-	// for response
-	type NewUser struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-	}
-
-	newUser := NewUser{
+	newUser := model.NewUserResponse{
 		Email:    user.Email,
 		Username: user.Username,
 	}
@@ -105,6 +100,7 @@ func CreateUser(c *fiber.Ctx) error {
 
 // UpdateUser update user
 func UpdateUser(c *fiber.Ctx) error {
+	print("cookie fiber", c.Cookies("jwt"))
 	type UpdateUserInput struct {
 		Names string `json:"names"`
 	}
@@ -126,6 +122,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	user.Names = uui.Names
 	db.Save(&user)
 
+	user.Password = ""
 	return c.JSON(fiber.Map{"status": "success", "message": "User successfully updated", "data": user})
 }
 
