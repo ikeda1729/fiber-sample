@@ -23,3 +23,14 @@ type IsFollowingResponse struct {
 	FolloweeID  string
 	IsFollowing bool
 }
+
+type NewUser struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type NewUserResponse struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
