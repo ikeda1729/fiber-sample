@@ -24,7 +24,6 @@ CREATE INDEX idx_tweets_deleted_at ON tweets (deleted_at timestamptz_ops);
 
 
 CREATE TABLE user_followees (
-	id int primary key NOT NULL,
 	user_id int8 NOT NULL,
 	followee_id int8 NOT NULL
 );
