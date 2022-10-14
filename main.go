@@ -16,7 +16,6 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		// 認証にcookieなどの情報を必要とするかどうか
 		AllowCredentials: true,
-		AllowOrigins:     os.Getenv("FRONTEND_URL"),
 	}))
 
 	database.ConnectDB()

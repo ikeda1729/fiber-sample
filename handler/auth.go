@@ -7,7 +7,6 @@ import (
 	"api-fiber-gorm/utils"
 	"errors"
 	"net/mail"
-	"os"
 	"time"
 
 	"gorm.io/gorm"
@@ -111,13 +110,9 @@ func Login(c *fiber.Ctx) error {
 
 	// Cookieに保存
 	cookie := fiber.Cookie{
-		Name:     "jwt",
-		Value:    t,
-		Expires:  exp,
-		SameSite: "none",
-		Secure:   true,
-		HTTPOnly: true,
-		Domain:   os.Getenv("DOMAIN"),
+		Name:    "jwt",
+		Value:   t,
+		Expires: exp,
 	}
 	c.Cookie(&cookie)
 
