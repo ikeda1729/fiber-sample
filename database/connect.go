@@ -5,10 +5,8 @@ import (
 	"api-fiber-gorm/model"
 	"api-fiber-gorm/seed"
 	"fmt"
-	"os"
 	"strconv"
 
-	"github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -16,13 +14,11 @@ import (
 
 // ConnectDB connect to db
 func ConnectDB() {
-	url := os.Getenv("DATABASE_URL")
-	connection, err := pq.ParseURL(url)
-	if err != nil {
-		panic(err.Error())
-	}
-	connection += " sslmode=require"
-	DB, err = gorm.Open(postgres.Open(connection), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
+	var err error
+	p := config.Config("DB_PORT")
+	port, err := strconv.ParseUint(p, 10, 32)
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=require", config.Config("DB_HOST"), port, config.Config("DB_USER"), config.Config("DB_PASSWORD"), config.Config("DB_NAME"))
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
 
 	if err != nil {
 		panic("failed to connect database")
