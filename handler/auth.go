@@ -114,6 +114,8 @@ func Login(c *fiber.Ctx) error {
 		Value:    t,
 		Expires:  exp,
 		SameSite: "none",
+		Secure:   true,
+		HTTPOnly: true,
 	}
 	c.Cookie(&cookie)
 
