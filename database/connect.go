@@ -36,7 +36,7 @@ func ConnectDB() {
 	// if err := seed.FolloweesSeed(DB, "./seed/user_followees.csv"); err != nil {
 	// 	fmt.Println(err)
 	// }
-	fmt.Println("Seeds added")
+	// fmt.Println("Seeds added")
 }
 
 // ConnectDB connect to db
