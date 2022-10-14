@@ -4,6 +4,7 @@ import (
 	"api-fiber-gorm/database"
 	"api-fiber-gorm/router"
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -20,5 +21,6 @@ func main() {
 	database.ConnectDB()
 
 	router.SetupRoutes(app)
-	log.Fatal(app.Listen(":8080"))
+	port := os.Getenv("PORT")
+	log.Fatal(app.Listen(":" + port))
 }
