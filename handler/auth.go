@@ -117,6 +117,7 @@ func Login(c *fiber.Ctx) error {
 		SameSite: "none",
 		Secure:   true,
 		HTTPOnly: true,
+		Domain:   os.Getenv("DOMAIN"),
 	}
 	c.Cookie(&cookie)
 
@@ -137,7 +138,6 @@ func Logout(ctx *fiber.Ctx) error {
 		Name:    "jwt",
 		Value:   "",
 		Expires: time.Now().Add(-time.Hour * 24), // -を指定
-		Domain:  os.Getenv("DOMAIN"),
 	}
 
 	ctx.Cookie(&cookie)
