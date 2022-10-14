@@ -7,6 +7,7 @@ import (
 	"api-fiber-gorm/utils"
 	"errors"
 	"net/mail"
+	"os"
 	"time"
 
 	"gorm.io/gorm"
@@ -136,6 +137,7 @@ func Logout(ctx *fiber.Ctx) error {
 		Name:    "jwt",
 		Value:   "",
 		Expires: time.Now().Add(-time.Hour * 24), // -を指定
+		Domain:  os.Getenv("DOMAIN"),
 	}
 
 	ctx.Cookie(&cookie)
