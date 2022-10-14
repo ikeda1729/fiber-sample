@@ -3,7 +3,6 @@ package database
 import (
 	"api-fiber-gorm/config"
 	"api-fiber-gorm/model"
-	"api-fiber-gorm/seed"
 	"fmt"
 	"strconv"
 
@@ -28,15 +27,15 @@ func ConnectDB() {
 	// DB.Migrator().DropTable(&model.Tweet{}, &model.User{}, "user_followees")
 	DB.AutoMigrate(&model.Tweet{}, &model.User{})
 	fmt.Println("Database Migrated")
-	if err := seed.UserSeed(DB, "./seed/users.csv"); err != nil {
-		fmt.Println(err)
-	}
-	if err := seed.TweetSeed(DB, "./seed/tweets.csv"); err != nil {
-		fmt.Println(err)
-	}
-	if err := seed.FolloweesSeed(DB, "./seed/user_followees.csv"); err != nil {
-		fmt.Println(err)
-	}
+	// if err := seed.UserSeed(DB, "./seed/users.csv"); err != nil {
+	// 	fmt.Println(err)
+	// }
+	// if err := seed.TweetSeed(DB, "./seed/tweets.csv"); err != nil {
+	// 	fmt.Println(err)
+	// }
+	// if err := seed.FolloweesSeed(DB, "./seed/user_followees.csv"); err != nil {
+	// 	fmt.Println(err)
+	// }
 	fmt.Println("Seeds added")
 }
 

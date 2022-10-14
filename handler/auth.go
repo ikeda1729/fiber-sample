@@ -110,9 +110,10 @@ func Login(c *fiber.Ctx) error {
 
 	// Cookieに保存
 	cookie := fiber.Cookie{
-		Name:    "jwt",
-		Value:   t,
-		Expires: exp,
+		Name:     "jwt",
+		Value:    t,
+		Expires:  exp,
+		SameSite: "none",
 	}
 	c.Cookie(&cookie)
 
