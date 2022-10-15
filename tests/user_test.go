@@ -49,7 +49,7 @@ func TestUser(t *testing.T) {
 	app := fiber.New()
 	app.Use(logger.New(logger.Config{
 		// For more options, see the Config section
-		Format: "${pid} ${locals:requestid} ${status} - ${method} ${path} cookie ${cookie}\n",
+		Format: "${pid} ${locals:requestid} ${status} - ${method} ${path} cookie ${reqHeaders}\n",
 	}))
 	router.SetupRoutes(app)
 
@@ -99,13 +99,7 @@ func TestUser(t *testing.T) {
 
 			req, _ := http.NewRequest(tc.method, tc.url, readerBody)
 			req.Header.Set("Content-Type", "application/json")
-			// cookieをセットしても認証できなかった
-			req.AddCookie(&http.Cookie{
-				Name:  "jwt",
-				Value: token,
-			})
-			// c, _ := req.Cookie("jwt")
-			// fmt.Print(*c)
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			resp, err := app.Test(req)
 
