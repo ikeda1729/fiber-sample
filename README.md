@@ -1,2 +1,3 @@
 # Goサンプルアプリ
-https://user-images.githubusercontent.com/88636666/196078598-f7f460b9-6820-4e8c-8509-748fc71da644.mp4
+https://user-images.githubusercontent.com/88636666/196084074-138df647-0194-49aa-9d3f-cdf3006d4fcd.mp4
+
