@@ -14,12 +14,36 @@ https://next-sample-kappa-lime.vercel.app
 
 ## 機能一覧
 - JWTによるユーザー認証
+- 入力情報のバリデーション
 - ツイート機能
 - フォロー機能
-- 入力情報のバリデーション
+- タイムライン機能
 - ページネーション機能
 - ユニットテスト（一部）
 
+## テーブル設計
+users, tweetsはhas many関係  
+user_followeesはusers間のmany to many関係
+```mermaid
+erDiagram
+users ||--o{ tweets: ""
+users ||--o{ user_followees: ""
+
+users {
+  string username
+  string email
+  string password
+}
+
+tweets {
+  string content
+}
+
+user_followees {
+  integer user_id
+  integer followee_id
+}
+```
 ## 追加情報
 フロントエンドのレポジトリ  
 https://github.com/ikeda1729/fiber-sample
