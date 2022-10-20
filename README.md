@@ -46,4 +46,4 @@ user_followees {
 ```
 ## 追加情報
 フロントエンドのレポジトリ  
-https://github.com/ikeda1729/fiber-sample
+https://github.com/ikeda1729/next-sample
